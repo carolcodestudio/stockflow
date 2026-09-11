@@ -1,0 +1,16 @@
+[
+  {
+    "id": 1,
+    "nome": "Teclado Mecânico",
+    "categoria": "Periféricos",
+    "quantidade": 11,
+    "preco": 199.9
+  },
+  {
+    "id": 2,
+    "nome": "Mouse Gamer RGB",
+    "categoria": "Periféricos",
+    "quantidade": 63,
+    "preco": 120
+  }
+]

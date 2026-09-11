@@ -1,0 +1,58 @@
+<div class="layout">
+
+  <aside class="sidebar">
+
+    <div class="logo">
+      <h2>StockFlow</h2>
+      <span>Inventory Management</span>
+    </div>
+
+    <nav>
+
+      <a
+        routerLink="/"
+        routerLinkActive="active"
+        [routerLinkActiveOptions]="{ exact: true }"
+      >
+        Dashboard
+      </a>
+
+      <a
+        routerLink="/produtos"
+        routerLinkActive="active"
+      >
+        Products
+      </a>
+
+      <a
+        routerLink="/entradas"
+        routerLinkActive="active"
+      >
+        Inventory Entries
+      </a>
+
+      <a
+        routerLink="/saidas"
+        routerLinkActive="active"
+      >
+        Inventory Outputs
+      </a>
+
+      <a
+        routerLink="/relatorios"
+        routerLinkActive="active"
+      >
+        Reports
+      </a>
+
+    </nav>
+
+  </aside>
+
+  <main class="main-content">
+
+    <router-outlet></router-outlet>
+
+  </main>
+
+</div>

@@ -1,158 +1,146 @@
-const fs = require("fs");
-
-const arquivo = "./data/produtos.json";
-
+const conexao = require("../../database/conexao");
 
 // LISTAR TODOS OS PRODUTOS
-function listarProdutos(req, res) {
+exports.listarProdutos = (req, res) => {
+    const sql = "SELECT * FROM produtos ORDER BY id ASC";
 
-    const produtos = JSON.parse(
-        fs.readFileSync(arquivo)
-    );
+    conexao.query(sql, (erro, resultados) => {
+        if (erro) {
+            console.error("Erro ao listar produtos:", erro);
+            return res.status(500).json({
+                erro: "Erro ao listar produtos"
+            });
+        }
 
-    res.json(produtos);
-}
+        res.json(resultados);
+    });
+};
 
 
 // BUSCAR PRODUTO POR ID
-function buscarProdutoPorId(req, res) {
+exports.buscarProdutoPorId = (req, res) => {
+    const id = req.params.id;
 
-    const produtos = JSON.parse(
-        fs.readFileSync(arquivo)
-    );
+    const sql = "SELECT * FROM produtos WHERE id = ?";
 
+    conexao.query(sql, [id], (erro, resultados) => {
+        if (erro) {
+            console.error("Erro ao buscar produto:", erro);
+            return res.status(500).json({
+                erro: "Erro ao buscar produto"
+            });
+        }
 
-    const id = Number(req.params.id);
+        if (resultados.length === 0) {
+            return res.status(404).json({
+                erro: "Produto não encontrado"
+            });
+        }
 
-
-    const produto = produtos.find(
-        produto => produto.id === id
-    );
-
-
-    if (!produto) {
-
-        return res.status(404).json({
-            mensagem: "Produto não encontrado"
-        });
-
-    }
-
-
-    res.json(produto);
-}
+        res.json(resultados[0]);
+    });
+};
 
 
 // CRIAR PRODUTO
-function criarProduto(req, res) {
+exports.criarProduto = (req, res) => {
+    const { nome, categoria, quantidade, preco } = req.body;
 
-    const produtos = JSON.parse(
-        fs.readFileSync(arquivo)
+    const sql = `
+        INSERT INTO produtos
+        (nome, categoria, quantidade, preco)
+        VALUES (?, ?, ?, ?)
+    `;
+
+    conexao.query(
+        sql,
+        [nome, categoria, quantidade, preco],
+        (erro, resultado) => {
+            if (erro) {
+                console.error("Erro ao criar produto:", erro);
+                return res.status(500).json({
+                    erro: "Erro ao criar produto"
+                });
+            }
+
+            res.status(201).json({
+                id: resultado.insertId,
+                nome,
+                categoria,
+                quantidade,
+                preco
+            });
+        }
     );
-
-
-    const novoProduto = {
-        id: Date.now(),
-        ...req.body
-    };
-
-
-    produtos.push(novoProduto);
-
-
-    fs.writeFileSync(
-        arquivo,
-        JSON.stringify(produtos, null, 2)
-    );
-
-
-    res.status(201).json(novoProduto);
-}
+};
 
 
 // ATUALIZAR PRODUTO
-function atualizarProduto(req, res) {
+exports.atualizarProduto = (req, res) => {
+    const id = req.params.id;
 
-    const produtos = JSON.parse(
-        fs.readFileSync(arquivo)
+    const { nome, categoria, quantidade, preco } = req.body;
+
+    const sql = `
+        UPDATE produtos
+        SET nome = ?,
+            categoria = ?,
+            quantidade = ?,
+            preco = ?
+        WHERE id = ?
+    `;
+
+    conexao.query(
+        sql,
+        [nome, categoria, quantidade, preco, id],
+        (erro, resultado) => {
+            if (erro) {
+                console.error("Erro ao atualizar produto:", erro);
+                return res.status(500).json({
+                    erro: "Erro ao atualizar produto"
+                });
+            }
+
+            if (resultado.affectedRows === 0) {
+                return res.status(404).json({
+                    erro: "Produto não encontrado"
+                });
+            }
+
+            res.json({
+                id: Number(id),
+                nome,
+                categoria,
+                quantidade,
+                preco
+            });
+        }
     );
+};
 
 
-    const id = Number(req.params.id);
+// EXCLUIR PRODUTO
+exports.deletarProduto = (req, res) => {
+    const id = req.params.id;
 
+    const sql = "DELETE FROM produtos WHERE id = ?";
 
-    const index = produtos.findIndex(
-        produto => produto.id === id
-    );
+    conexao.query(sql, [id], (erro, resultado) => {
+        if (erro) {
+            console.error("Erro ao excluir produto:", erro);
+            return res.status(500).json({
+                erro: "Erro ao excluir produto"
+            });
+        }
 
+        if (resultado.affectedRows === 0) {
+            return res.status(404).json({
+                erro: "Produto não encontrado"
+            });
+        }
 
-    if (index === -1) {
-
-        return res.status(404).json({
-            mensagem: "Produto não encontrado"
+        res.json({
+            mensagem: "Produto excluído com sucesso"
         });
-
-    }
-
-
-    produtos[index] = {
-        ...produtos[index],
-        ...req.body
-    };
-
-
-    fs.writeFileSync(
-        arquivo,
-        JSON.stringify(produtos, null, 2)
-    );
-
-
-    res.json(produtos[index]);
-}
-
-
-// DELETAR PRODUTO
-function deletarProduto(req, res) {
-
-    const produtos = JSON.parse(
-        fs.readFileSync(arquivo)
-    );
-
-
-    const id = Number(req.params.id);
-
-
-    const novosProdutos = produtos.filter(
-        produto => produto.id !== id
-    );
-
-
-    if (produtos.length === novosProdutos.length) {
-
-        return res.status(404).json({
-            mensagem: "Produto não encontrado"
-        });
-
-    }
-
-
-    fs.writeFileSync(
-        arquivo,
-        JSON.stringify(novosProdutos, null, 2)
-    );
-
-
-    res.json({
-        mensagem: "Produto removido com sucesso"
     });
-}
-
-
-
-module.exports = {
-    listarProdutos,
-    buscarProdutoPorId,
-    criarProduto,
-    atualizarProduto,
-    deletarProduto
 };

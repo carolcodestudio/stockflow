@@ -18,16 +18,12 @@ import { Produto } from '../models/produto';
     </header>
 
     <section class="entrada-card">
-
       <div class="card-header">
         <h2>New Entry</h2>
         <p>Select a product and enter the received quantity.</p>
       </div>
 
-      <form
-        class="entrada-form"
-        (ngSubmit)="registrarEntrada()"
-      >
+      <form class="entrada-form">
 
         <div class="form-group">
           <label for="produto">Product</label>
@@ -36,9 +32,7 @@ import { Produto } from '../models/produto';
             id="produto"
             name="produto"
             [(ngModel)]="produtoSelecionado"
-            required
           >
-
             <option [ngValue]="null">
               Select a product
             </option>
@@ -49,7 +43,6 @@ import { Produto } from '../models/produto';
             >
               {{ produto.nome }} — current stock: {{ produto.quantidade }}
             </option>
-
           </select>
         </div>
 
@@ -62,7 +55,6 @@ import { Produto } from '../models/produto';
             name="quantidade"
             [(ngModel)]="quantidadeEntrada"
             min="1"
-            required
           >
         </div>
 
@@ -90,14 +82,14 @@ import { Produto } from '../models/produto';
         </div>
 
         <div class="form-actions">
-
           <button
-            type="submit"
+            type="button"
             class="btn-primary"
+            (click)="registrarEntrada()"
+            [disabled]="processando"
           >
-            Register Entry
+            {{ processando ? 'Registering...' : 'Register Entry' }}
           </button>
-
         </div>
 
       </form>
@@ -115,10 +107,8 @@ import { Produto } from '../models/produto';
       >
         {{ mensagemErro }}
       </p>
-
     </section>
   `,
-
   styles: [`
     :host {
       display: block;
@@ -217,6 +207,11 @@ import { Produto } from '../models/produto';
       background: #1d4ed8;
     }
 
+    .btn-primary:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
     .mensagem {
       margin-top: 20px;
       padding: 12px 14px;
@@ -246,13 +241,18 @@ export class Entradas implements OnInit {
   produtos: Produto[] = [];
 
   produtoSelecionado: Produto | null = null;
+
   quantidadeEntrada: number | null = null;
 
   data = '';
+
   observacao = '';
 
   mensagemSucesso = '';
+
   mensagemErro = '';
+
+  processando = false;
 
   constructor(
     private produtoService: ProdutoService
@@ -267,7 +267,6 @@ export class Entradas implements OnInit {
     this.produtoService
       .listarProdutos()
       .subscribe({
-
         next: (dados: Produto[]) => {
           this.produtos = dados;
         },
@@ -281,11 +280,14 @@ export class Entradas implements OnInit {
           this.mensagemErro =
             'Unable to load products.';
         }
-
       });
   }
 
   registrarEntrada(): void {
+
+    if (this.processando) {
+      return;
+    }
 
     this.mensagemSucesso = '';
     this.mensagemErro = '';
@@ -299,12 +301,13 @@ export class Entradas implements OnInit {
       !Number.isFinite(quantidade) ||
       quantidade <= 0
     ) {
-
       this.mensagemErro =
         'Select a product and enter a valid quantity.';
 
       return;
     }
+
+    this.processando = true;
 
     this.produtoService
       .registrarEntrada(
@@ -312,8 +315,7 @@ export class Entradas implements OnInit {
         quantidade
       )
       .subscribe({
-
-        next: (produtoAtualizado: Produto) => {
+        next: () => {
 
           this.mensagemSucesso =
             'Inventory entry registered successfully!';
@@ -322,6 +324,8 @@ export class Entradas implements OnInit {
           this.quantidadeEntrada = null;
           this.data = '';
           this.observacao = '';
+
+          this.processando = false;
 
           this.carregarProdutos();
         },
@@ -335,9 +339,9 @@ export class Entradas implements OnInit {
 
           this.mensagemErro =
             'Unable to register the inventory entry.';
-        }
 
+          this.processando = false;
+        }
       });
   }
-
 }

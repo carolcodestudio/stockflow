@@ -1,4 +1,5 @@
-import { Component, OnInit } from '@angular/core';
+
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 import { ProdutoService } from '../services/produto.service';
@@ -8,6 +9,7 @@ import { Produto } from '../models/produto';
   selector: 'app-relatorios',
   standalone: true,
   imports: [CommonModule],
+
   template: `
     <header class="topbar">
       <div>
@@ -45,7 +47,6 @@ import { Produto } from '../models/produto';
       </div>
 
       <div class="table-wrapper">
-
         <table>
 
           <thead>
@@ -59,7 +60,6 @@ import { Produto } from '../models/produto';
           </thead>
 
           <tbody>
-
             <tr *ngFor="let produto of produtos">
 
               <td>
@@ -75,19 +75,16 @@ import { Produto } from '../models/produto';
               </td>
 
               <td>
-                R$
-                {{
+                R$ {{
                   produto.quantidade * produto.preco
                   | number:'1.2-2'
                 }}
               </td>
 
             </tr>
-
           </tbody>
 
         </table>
-
       </div>
 
     </section>
@@ -204,7 +201,8 @@ export class Relatorios implements OnInit {
   produtos: Produto[] = [];
 
   constructor(
-    private produtoService: ProdutoService
+    private produtoService: ProdutoService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
@@ -218,7 +216,15 @@ export class Relatorios implements OnInit {
       .subscribe({
 
         next: (dados: Produto[]) => {
-          this.produtos = dados;
+
+          this.produtos = dados.map(produto => ({
+            ...produto,
+            quantidade: Number(produto.quantidade),
+            preco: Number(produto.preco)
+          }));
+
+
+          this.cdr.detectChanges();
         },
 
         error: (erro) => {
@@ -244,8 +250,7 @@ export class Relatorios implements OnInit {
 
     return this.produtos.reduce(
       (total, produto) =>
-        total +
-        (produto.quantidade * produto.preco),
+        total + (produto.quantidade * produto.preco),
       0
     );
   }
